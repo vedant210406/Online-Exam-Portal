@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Exam | Online Exam Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+  <!-- Firebase Config -->
+  <script src="firebase-config.js"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-page">
+
+  <div class="text-right p-4">
+    <button onclick="logout()" class="text-red-600 underline">Logout</button>
+  </div>
+
+  <div class="dashboard-container">
+    <h2 class="text-xl font-bold text-center text-blue-700 mb-4">➕ Create Quiz</h2>
+
+    <input type="text" id="question" class="input" placeholder="Enter Question">
+    <input type="text" id="opt1" class="input" placeholder="Option 1">
+    <input type="text" id="opt2" class="input" placeholder="Option 2">
+    <input type="text" id="opt3" class="input" placeholder="Option 3">
+    <input type="text" id="opt4" class="input" placeholder="Option 4">
+    <input type="number" id="correct" class="input" placeholder="Correct Option (1-4)" min="1" max="4">
+
+    <select id="category" class="input mb-4">
+      <option value="Java">Java</option>
+      <option value="Python">Python</option>
+      <option value="Aptitude">Aptitude</option>
+    </select>
+
+    <button onclick="saveQuestion()" class="btn-login mt-2 w-full">Save Question</button>
+  </div>
+
+  <script>
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        alert("Not logged in. Redirecting...");
+        window.location.href = "login.html";
+      }
+    });
+
+    function saveQuestion() {
+      const q = document.getElementById("question").value.trim();
+      const o1 = document.getElementById("opt1").value.trim();
+      const o2 = document.getElementById("opt2").value.trim();
+      const o3 = document.getElementById("opt3").value.trim();
+      const o4 = document.getElementById("opt4").value.trim();
+      const correct = parseInt(document.getElementById("correct").value);
+      const category = document.getElementById("category").value;
+
+      if (!q || !o1 || !o2 || !o3 || !o4 || isNaN(correct) || correct < 1 || correct > 4) {
+        alert("❌ Please fill all fields correctly.");
+        return;
+      }
+
+      db.collection("quiz").add({
+        question: q,
+        options: [o1, o2, o3, o4],
+        correct: correct,
+        category: category,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        alert("✅ Question saved!");
+        document.querySelectorAll("input").forEach(i => i.value = "");
+      }).catch(err => {
+        alert("❌ Error saving: " + err.message);
+      });
+    }
+
+    function logout() {
+      auth.signOut().then(() => {
+        alert("Logged out!");
+        window.location.href = "login.html";
+      });
+    }
+  </script>
+</body>
+</html>

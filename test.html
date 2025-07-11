@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Firebase Test</title>
+
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+
+  <!-- Firebase config -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBxXkhN2Eu4fOOWu6nbDVCQGka_jRYUKFM",
+      authDomain: "exam-portal-8ac4e.firebaseapp.com",
+      projectId: "exam-portal-8ac4e",
+      storageBucket: "exam-portal-8ac4e.appspot.com",
+      messagingSenderId: "659111610901",
+      appId: "1:659111610901:web:882ff39ec888be75d31c1c"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+  </script>
+</head>
+<body>
+  <h2>Test Firestore Save</h2>
+  <button onclick="saveData()">Save Test</button>
+
+  <script>
+    function saveData() {
+      db.collection("testCollection").add({
+        message: "Hello Firebase!",
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        alert("✅ Data saved!");
+      }).catch(err => {
+        alert("❌ Error: " + err.message);
+        console.error(err);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard | Online Exam Portal</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+  <style>
+    .tab-btn.active {
+      background-color: #1e3a8a;
+      color: white;
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen font-sans text-gray-800">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-blue-800 text-white p-6 space-y-4 shadow-2xl">
+      <h1 class="text-3xl font-extrabold mb-6">📚 Exam Portal</h1>
+      <nav class="space-y-3">
+        <button class="tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-blue-700 transition" onclick="showTab('add')">➕ Add Question</button>
+        <button class="tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-blue-700 transition" onclick="showTab('quiz')">📝 Take Quiz</button>
+        <button class="tab-btn w-full text-left px-4 py-2 rounded-lg hover:bg-blue-700 transition" onclick="showTab('result')">📊 View Results</button>
+        <button class="w-full text-left px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 transition" onclick="logout()">🚪 Logout</button>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-10 overflow-y-auto bg-white shadow-inner rounded-tl-3xl">
+      
+      <!-- Add Question Tab -->
+      <section id="tab-add" class="tab-section">
+        <h2 class="text-2xl font-bold text-blue-700 mb-6">➕ Add New Question</h2>
+        <form id="addForm" class="grid gap-4 max-w-2xl">
+          <input class="p-3 border rounded-lg" placeholder="Enter Question" id="question" required />
+          <input class="p-3 border rounded-lg" placeholder="Option 1" id="opt1" required />
+          <input class="p-3 border rounded-lg" placeholder="Option 2" id="opt2" required />
+          <input class="p-3 border rounded-lg" placeholder="Option 3" id="opt3" required />
+          <input class="p-3 border rounded-lg" placeholder="Option 4" id="opt4" required />
+          <input class="p-3 border rounded-lg" type="number" placeholder="Correct Option (1-4)" min="1" max="4" id="correct" required />
+          <select id="category" class="p-3 border rounded-lg">
+            <option value="Java">Java</option>
+            <option value="Python">Python</option>
+            <option value="Aptitude">Aptitude</option>
+          </select>
+          <button type="submit" class="bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition">💾 Save Question</button>
+        </form>
+      </section>
+
+      <!-- Take Quiz Tab -->
+      <section id="tab-quiz" class="tab-section hidden">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold text-blue-700">📝 Take Quiz</h2>
+          <div id="quizTimer" class="text-lg font-bold text-red-600 hidden">⏳ Time Left: 05:00</div>
+        </div>
+
+        <div class="flex gap-4 mb-4">
+          <select id="quizCategory" class="p-3 border rounded-lg">
+            <option value="Java">Java</option>
+            <option value="Python">Python</option>
+            <option value="Aptitude">Aptitude</option>
+          </select>
+          <button onclick="loadQuiz()" class="bg-blue-500 text-white px-5 py-2 rounded-lg hover:bg-blue-600 transition">🔄 Load Quiz</button>
+        </div>
+
+        <form id="quizForm" class="space-y-6"></form>
+        <button onclick="submitQuiz()" id="submitBtn" class="mt-6 bg-purple-600 text-white py-3 px-6 rounded-lg hover:bg-purple-700 transition">Submit Quiz</button>
+      </section>
+
+      <!-- Result Tab -->
+      <section id="tab-result" class="tab-section hidden">
+        <h2 class="text-2xl font-bold text-blue-700 mb-6">📊 Your Quiz Results</h2>
+        <div id="resultDisplay" class="space-y-4"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBxXkhN2Eu4fOOWu6nbDVCQGka_jRYUKFM",
+      authDomain: "exam-portal-8ac4e.firebaseapp.com",
+      projectId: "exam-portal-8ac4e",
+      storageBucket: "exam-portal-8ac4e.appspot.com",
+      messagingSenderId: "659111610901",
+      appId: "1:659111610901:web:882ff39ec888be75d31c1c"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const tabs = document.querySelectorAll(".tab-section");
+    const tabButtons = document.querySelectorAll(".tab-btn");
+
+    function showTab(id) {
+      tabs.forEach(t => t.classList.add("hidden"));
+      document.getElementById("tab-" + id).classList.remove("hidden");
+      tabButtons.forEach(btn => btn.classList.remove("active"));
+      [...tabButtons].find(btn => btn.innerText.toLowerCase().includes(id)).classList.add("active");
+      if (id === "result") loadResult();
+    }
+
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = "login.html";
+    });
+
+    document.getElementById("addForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const question = document.getElementById("question").value;
+      const options = [1, 2, 3, 4].map(n => document.getElementById("opt" + n).value);
+      const correct = parseInt(document.getElementById("correct").value);
+      const category = document.getElementById("category").value;
+
+      await db.collection("quiz").add({ question, options, correct, category, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      alert("✅ Question added successfully.");
+      e.target.reset();
+    });
+
+    let quizTimerInterval;
+    let totalTime = 300;
+
+    function startQuizTimer() {
+      clearInterval(quizTimerInterval);
+      const timerEl = document.getElementById("quizTimer");
+      const submitBtn = document.getElementById("submitBtn");
+      timerEl.classList.remove("hidden");
+
+      function updateTimer() {
+        const minutes = Math.floor(totalTime / 60).toString().padStart(2, '0');
+        const seconds = (totalTime % 60).toString().padStart(2, '0');
+        timerEl.textContent = `⏳ Time Left: ${minutes}:${seconds}`;
+        totalTime--;
+
+        if (totalTime < 0) {
+          clearInterval(quizTimerInterval);
+          alert("⏰ Time's up! Submitting your quiz.");
+          submitBtn.disabled = true;
+          submitQuiz();
+        }
+      }
+
+      updateTimer();
+      quizTimerInterval = setInterval(updateTimer, 1000);
+    }
+
+    async function loadQuiz() {
+      totalTime = 300;
+      const cat = document.getElementById("quizCategory").value;
+      const form = document.getElementById("quizForm");
+      form.innerHTML = "<p>Loading questions...</p>";
+      const snapshot = await db.collection("quiz").where("category", "==", cat).get();
+
+      if (snapshot.empty) {
+        form.innerHTML = "<p class='text-red-500'>⚠️ No questions available for this category.</p>";
+        return;
+      }
+
+      let html = "";
+      let index = 0;
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        html += `<div class='bg-gray-100 p-5 rounded-xl shadow-sm'>
+          <p class='font-semibold mb-3'>${++index}. ${data.question}</p>
+          ${data.options.map((opt, i) => `
+            <label class='block mb-2'>
+              <input type='radio' name='q${doc.id}' value='${i + 1}' class='mr-2'> ${opt}
+            </label>
+          `).join("")}
+        </div>`;
+      });
+      form.innerHTML = html;
+
+      startQuizTimer();
+    }
+
+    async function submitQuiz() {
+      clearInterval(quizTimerInterval);
+      const form = document.getElementById("quizForm");
+      const selected = form.querySelectorAll("input[type='radio']:checked");
+      const answers = {};
+      selected.forEach(input => {
+        answers[input.name] = parseInt(input.value);
+      });
+
+      const cat = document.getElementById("quizCategory").value;
+      const snapshot = await db.collection("quiz").where("category", "==", cat).get();
+      let correctCount = 0;
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (answers[`q${doc.id}`] === data.correct) correctCount++;
+      });
+
+      const user = auth.currentUser;
+      await db.collection("results").add({
+        email: user.email,
+        category: cat,
+        score: correctCount,
+        submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      alert(`✅ Quiz submitted! Your score: ${correctCount}`);
+      form.innerHTML = "";
+    }
+
+    async function loadResult() {
+      const user = auth.currentUser;
+      const snapshot = await db.collection("results").where("email", "==", user.email).get();
+      let html = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        html += `<div class='bg-green-100 border border-green-300 p-4 rounded-lg'>
+                  <strong>${data.category}</strong> → Score: <span class='font-bold'>${data.score}</span>
+                </div>`;
+      });
+      document.getElementById("resultDisplay").innerHTML = html || "<p class='text-gray-500'>No results yet.</p>";
+    }
+
+    function logout() {
+      auth.signOut().then(() => window.location.href = "login.html");
+    }
+  </script>
+</body>
+</html>

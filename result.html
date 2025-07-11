@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Result | Online Exam Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-page">
+  <div class="dashboard-container">
+    <h2>🎓 Your Result</h2>
+    <div id="latest-result">Loading your result...</div>
+    <h3 class="mt-6 font-bold">🏆 Leaderboard</h3>
+    <ul id="leaderboard" class="text-sm text-gray-800 mt-2"></ul>
+  </div>
+
+  <script>
+    const latestDiv = document.getElementById("latest-result");
+    const leaderboard = document.getElementById("leaderboard");
+
+    auth.onAuthStateChanged(user => {
+      if (!user) return window.location.href = "login.html";
+
+      db.collection("results").where("email", "==", user.email)
+        .orderBy("submittedAt", "desc").limit(1)
+        .get().then(snapshot => {
+          if (snapshot.empty) {
+            latestDiv.innerText = "❌ No results yet.";
+          } else {
+            const r = snapshot.docs[0].data();
+            latestDiv.innerText = `✅ You scored ${r.score}/${r.total}`;
+          }
+        });
+
+      db.collection("results").orderBy("score", "desc").limit(5)
+        .get().then(snapshot => {
+          leaderboard.innerHTML = "";
+          snapshot.forEach(doc => {
+            const r = doc.data();
+            leaderboard.innerHTML += `<li>${r.email} — ${r.score}/${r.total}</li>`;
+          });
+        });
+    });
+  </script>
+</body>
+</html>
+
+
+

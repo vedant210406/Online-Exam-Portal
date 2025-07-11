@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login | Online Exam Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 flex items-center justify-center">
+
+  <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full border border-purple-200">
+    <h2 class="text-3xl font-bold text-center text-purple-700 mb-6">🎓 Online Exam Portal</h2>
+    
+    <input type="email" id="email" placeholder="Enter Email"
+           class="w-full mb-4 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
+
+    <input type="password" id="password" placeholder="Enter Password"
+           class="w-full mb-6 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
+
+    <div class="flex justify-between space-x-4">
+      <button onclick="login()" 
+              class="w-1/2 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-semibold transition duration-300">
+        🔓 Login
+      </button>
+      <button onclick="register()" 
+              class="w-1/2 bg-gray-200 hover:bg-gray-300 text-purple-700 py-2 rounded-lg font-semibold transition duration-300">
+        ✍️ Register
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          alert("✅ Login Successful");
+          window.location.href = "dashboard.html";
+        }).catch(err => alert("❌ Login Failed: " + err.message));
+    }
+
+    function register() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(() => alert("✅ Registered Successfully"))
+        .catch(err => alert("❌ Registration Failed: " + err.message));
+    }
+  </script>
+</body>
+</html>

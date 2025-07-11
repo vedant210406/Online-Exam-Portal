@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <title>Attempt Quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-page">
+  <div class="dashboard-container">
+    <h2>Attempt Quiz</h2>
+    <select id="quizCategory" onchange="loadQuiz()" class="input mb-4">
+      <option value="Java">Java</option>
+      <option value="Python">Python</option>
+      <option value="Aptitude">Aptitude</option>
+    </select>
+    <form id="quizForm"></form>
+    <button onclick="submitQuiz()" class="btn-login mt-4">Submit Quiz</button>
+  </div>
+
+  <script>
+    let questions = [];
+    function loadQuiz() {
+      const cat = document.getElementById("quizCategory").value;
+      db.collection("quiz").where("category", "==", cat).orderBy("createdAt")
+        .get().then(snapshot => {
+          questions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          document.getElementById("quizForm").innerHTML = "";
+          displayQuiz();
+        });
+    }
+
+    function displayQuiz() {
+      const form = document.getElementById("quizForm");
+      questions.forEach((q, i) => {
+        const qDiv = document.createElement("div");
+        qDiv.className = "mb-4 text-left";
+        qDiv.innerHTML = `
+          <h3 class="font-semibold mb-2">${i + 1}. ${q.question}</h3>
+          ${q.options.map((opt, j) => `
+            <label class="block mb-1">
+              <input type="radio" name="q${i}" value="${j + 1}" class="mr-2">${opt}
+            </label>
+          `).join('')}
+        `;
+        form.appendChild(qDiv);
+      });
+    }
+
+    function submitQuiz() {
+      let score = 0;
+      questions.forEach((q, i) => {
+        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+        if (selected && parseInt(selected.value) === q.correct) score++;
+      });
+
+      alert(`You scored ${score} out of ${questions.length}`);
+      const user = auth.currentUser;
+      if (user) {
+        db.collection("results").add({
+          email: user.email,
+          score,
+          total: questions.length,
+          submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => alert("✅ Result saved!"));
+      }
+    }
+
+    loadQuiz();
+  </script>
+</body>
+</html>

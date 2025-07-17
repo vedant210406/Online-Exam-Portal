@@ -1,16 +1,25 @@
-// firebase-config.js
+// firebaseConfig.js
+
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBxXkhN2Eu4fOOWu6nbDVCQGka_jRYUKFM",
-  authDomain: "exam-portal-8ac4e.firebaseapp.com",
-  projectId: "exam-portal-8ac4e",
-  storageBucket: "exam-portal-8ac4e.appspot.com",
-  messagingSenderId: "659111610901",
-  appId: "1:659111610901:web:882ff39ec888be75d31c1c"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
-// ✅ Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
-// ✅ Auth and Firestore instances
-const auth = firebase.auth();
-const db = firebase.firestore();
+// Export services
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
